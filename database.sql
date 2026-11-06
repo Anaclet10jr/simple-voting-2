@@ -1,0 +1,42 @@
+CREATE DATABASE IF NOT EXISTS online_voting_system CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE online_voting_system;
+
+CREATE TABLE IF NOT EXISTS users (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  full_name VARCHAR(120) NOT NULL,
+  email VARCHAR(190) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  role ENUM('admin','voter') NOT NULL DEFAULT 'voter',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS elections (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(180) NOT NULL,
+  description TEXT NULL,
+  starts_at DATETIME NOT NULL,
+  ends_at DATETIME NOT NULL,
+  status ENUM('draft','published','closed') NOT NULL DEFAULT 'draft',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS candidates (
+  id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  election_id INT UNSIGNED NOT NULL,
+  full_name VARCHAR(120) NOT NULL,
+  manifesto TEXT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_candidate_election FOREIGN KEY (election_id) REFERENCES elections(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS votes (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  election_id INT UNSIGNED NOT NULL,
+  candidate_id INT UNSIGNED NOT NULL,
+  voter_id INT UNSIGNED NOT NULL,
+  cast_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_vote_election FOREIGN KEY (election_id) REFERENCES elections(id) ON DELETE CASCADE,
+  CONSTRAINT fk_vote_candidate FOREIGN KEY (candidate_id) REFERENCES candidates(id) ON DELETE CASCADE,
+  CONSTRAINT fk_vote_voter FOREIGN KEY (voter_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT uq_one_vote_per_election UNIQUE (election_id, voter_id)
+) ENGINE=InnoDB;
